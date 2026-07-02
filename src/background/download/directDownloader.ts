@@ -10,7 +10,7 @@ export const directDownloader: Downloader = {
     return video.kind === 'direct';
   },
 
-  async download(video: DetectedVideo): Promise<DownloadResult> {
+  async download(video: DetectedVideo, _tabId: number): Promise<DownloadResult> {
     const filename = buildDownloadFilename({
       url: video.url,
       mimeType: video.mimeType,

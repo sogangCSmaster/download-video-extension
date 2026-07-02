@@ -1,6 +1,6 @@
 import { sendMessage } from '@shared/messages';
-import { storageKeyForTab } from '@shared/storageKeys';
-import type { DetectedVideo } from '@shared/types';
+import { downloadStateKeyForTab, storageKeyForTab } from '@shared/storageKeys';
+import type { DetectedVideo, StreamDownloadState } from '@shared/types';
 
 import { renderVideoList } from './videoList';
 
@@ -31,8 +31,12 @@ async function main(): Promise<void> {
     return;
   }
   const tabId = foundTabId;
+  const downloadStateKey = downloadStateKeyForTab(tabId);
 
   let currentVideos: DetectedVideo[] = [];
+  // 스트림 다운로드 진행 상태 — SW가 storage.session에 기록하므로
+  // 팝업을 닫았다 열어도 진행률이 복원된다
+  let streamStates: Record<string, StreamDownloadState> = {};
   // 진행 중인 다운로드 id. 재렌더가 일어나도 이 집합 기준으로 버튼을 비활성화해
   // 목록 갱신이 중복 다운로드를 허용하는 일이 없게 한다.
   const inFlightDownloads = new Set<string>();
@@ -45,11 +49,23 @@ async function main(): Promise<void> {
   function render(): void {
     countEl.hidden = currentVideos.length === 0;
     countEl.textContent = String(currentVideos.length);
-    renderVideoList(listContainer, currentVideos, { onDownload }, inFlightDownloads);
+    renderVideoList(
+      listContainer,
+      currentVideos,
+      { onDownload, onCancel },
+      inFlightDownloads,
+      streamStates,
+    );
   }
 
   async function refresh(): Promise<void> {
-    currentVideos = await sendMessage({ type: 'GET_VIDEOS', tabId });
+    const [videos, stored] = await Promise.all([
+      sendMessage({ type: 'GET_VIDEOS', tabId }),
+      chrome.storage.session.get(downloadStateKey),
+    ]);
+    currentVideos = videos;
+    streamStates =
+      (stored[downloadStateKey] as Record<string, StreamDownloadState> | undefined) ?? {};
     render();
   }
 
@@ -87,6 +103,17 @@ async function main(): Promise<void> {
     })();
   }
 
+  function onCancel(videoId: string): void {
+    void (async () => {
+      try {
+        await sendMessage({ type: 'CANCEL_DOWNLOAD', tabId, videoId });
+        showStatus('다운로드를 취소했습니다.');
+      } catch (error) {
+        showStatus(`취소 실패: ${describeError(error)}`, true);
+      }
+    })();
+  }
+
   rescanButton.addEventListener('click', () => {
     void (async () => {
       showStatus('다시 스캔 중…');
@@ -100,11 +127,20 @@ async function main(): Promise<void> {
     })();
   });
 
-  // 팝업이 열려 있는 동안 새 동영상이 탐지되면 실시간 갱신
+  // 팝업이 열려 있는 동안 새 동영상 탐지·다운로드 진행률 변화를 실시간 반영
   chrome.storage.session.onChanged.addListener((changes) => {
+    let needsRender = false;
     if (storageKeyForTab(tabId) in changes) {
       void safeRefresh();
+      return;
     }
+    const stateChange = changes[downloadStateKey];
+    if (stateChange) {
+      streamStates =
+        (stateChange.newValue as Record<string, StreamDownloadState> | undefined) ?? {};
+      needsRender = true;
+    }
+    if (needsRender) render();
   });
 
   await safeRefresh();

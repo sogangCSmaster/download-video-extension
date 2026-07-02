@@ -35,9 +35,14 @@ async function handleMediaResponse(
 
   const mimeType = parseMimeType(headerValue(details.responseHeaders, 'content-type'));
   const kind = classifyVideoUrl(details.url, mimeType);
+  if (kind === null || kind === 'blob') return;
 
-  // hls/dash는 1단계에서 다운로드 미지원 — 저장하지 않는다 (2단계에서 이 분기를 확장)
-  if (kind !== 'direct') return;
+  // 매니페스트(.m3u8/.mpd)는 xhr/other로 오므로 그 타입에서는 hls/dash만 수용한다.
+  // direct를 media 타입으로 한정하지 않으면 fMP4/DASH의 세그먼트(.mp4/.m4s) xhr이
+  // 전부 direct 항목으로 목록을 오염시킨다.
+  if (details.type !== 'media' && kind === 'direct') return;
+  // 참고: 한 스트림의 master/variant 플레이리스트가 별도 항목으로 둘 다 잡힐 수 있는데,
+  // 다운로더가 둘 다 처리하므로 허용한다.
 
   if (seen) {
     seen.add(id);
@@ -66,7 +71,8 @@ export function registerNetworkDetector(): void {
     (details) => {
       void handleMediaResponse(details);
     },
-    { urls: ['<all_urls>'], types: ['media'] },
+    // HLS/DASH 매니페스트는 대개 xmlhttprequest/other 타입으로 요청된다
+    { urls: ['<all_urls>'], types: ['media', 'xmlhttprequest', 'other'] },
     ['responseHeaders'],
   );
 }

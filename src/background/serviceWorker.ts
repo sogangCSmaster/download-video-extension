@@ -3,9 +3,11 @@
 import { registerBadge } from './badge';
 import { registerMessageRouter } from './messageRouter';
 import { registerNetworkDetector } from './networkDetector';
+import { registerStreamJobs } from './streamJobs';
 import { registerTabLifecycle } from './tabLifecycle';
 
 registerMessageRouter();
 registerNetworkDetector();
 registerTabLifecycle();
 registerBadge();
+registerStreamJobs();
