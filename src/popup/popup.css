@@ -1,0 +1,256 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, 'Apple SD Gothic Neo', sans-serif;
+
+  --bg: #ffffff;
+  --surface: #f6f7f9;
+  --border: #e4e6ea;
+  --text: #1b1f27;
+  --text-dim: #6b7280;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-text: #ffffff;
+  --warn: #b45309;
+  --warn-bg: #fef3e2;
+  --error: #dc2626;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1e2026;
+    --surface: #2a2d35;
+    --border: #3a3e48;
+    --text: #e8eaed;
+    --text-dim: #9aa0ab;
+    --accent: #4f83f1;
+    --accent-hover: #6b97f3;
+    --warn: #f0a75a;
+    --warn-bg: #3a3125;
+    --error: #f07070;
+  }
+}
+
+body {
+  width: 400px;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ── 헤더 ─────────────────────────────── */
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.popup-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.popup-logo {
+  width: 22px;
+  height: 22px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.popup-header h1 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.video-count {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+#rescan-button {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#rescan-button:hover {
+  background: var(--surface);
+}
+
+/* ── 목록 ─────────────────────────────── */
+
+#list-container {
+  padding: 10px 14px;
+}
+
+.video-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 440px;
+  overflow-y: auto;
+}
+
+.video-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.video-thumb {
+  width: 76px;
+  height: 46px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+
+.video-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.video-thumb svg {
+  width: 22px;
+  height: 22px;
+  opacity: 0.8;
+}
+
+.video-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.video-name {
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.video-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.meta-chip {
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--text-dim) 14%, transparent);
+  color: var(--text-dim);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.video-badge {
+  margin-top: 5px;
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--warn-bg);
+  color: var(--warn);
+  font-size: 11px;
+}
+
+/* ── 다운로드 버튼 ────────────────────── */
+
+.download-button {
+  flex-shrink: 0;
+  padding: 7px 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.download-button:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.download-button:disabled {
+  background: color-mix(in srgb, var(--text-dim) 22%, transparent);
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── 빈 상태 / 상태 표시줄 ────────────── */
+
+.empty-state {
+  margin: 0;
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.empty-state svg {
+  width: 36px;
+  height: 36px;
+  color: var(--text-dim);
+  opacity: 0.6;
+}
+
+.empty-title {
+  margin: 10px 0 4px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.empty-hint {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.status {
+  min-height: 17px;
+  margin: 0;
+  padding: 6px 14px 10px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.status.error {
+  color: var(--error);
+}

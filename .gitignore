@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Vite
+.vite/
+*.local
+
+# OS
+.DS_Store
+
+# Editor
+.idea/
+*.swp
+
+# Logs
+*.log

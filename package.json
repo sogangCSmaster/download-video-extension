@@ -1,0 +1,22 @@
+{
+  "name": "download-video-extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Chrome extension that lists and downloads videos detected on the current page",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^2.7.1",
+    "@types/chrome": "^0.2.2",
+    "@types/node": "^26.1.0",
+    "typescript": "^5.9.2",
+    "vite": "^8.1.2",
+    "vitest": "^4.1.9"
+  }
+}
