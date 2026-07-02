@@ -26,6 +26,11 @@ function videoDisplayName(video: DetectedVideo): string {
   if (video.kind === 'blob') {
     return video.pageTitle || t('streamingVideoName');
   }
+  // HLS/DASH URL의 basename은 불투명한 file_id인 경우가 많으므로,
+  // 같은 프레임 blob에서 옮겨온 제목이 있으면 그걸 우선한다 (detectionView 참고)
+  if ((video.kind === 'hls' || video.kind === 'dash') && video.pageTitle) {
+    return video.pageTitle;
+  }
   return urlBasename(video.url) ?? video.url;
 }
 

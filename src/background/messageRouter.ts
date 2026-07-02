@@ -1,3 +1,4 @@
+import { collapseFrameDuplicates } from '@shared/detectionView';
 import { t } from '@shared/i18n';
 import type { Message, MessageOf, MessageType, ResponseMap } from '@shared/messages';
 import { sendMessageToTab } from '@shared/messages';
@@ -52,11 +53,13 @@ const handlers: HandlerTable = {
   },
 
   async GET_VIDEOS(msg) {
-    return getVideos(msg.tabId);
+    // 같은 프레임의 blob+스트림 중복을 하나로 합쳐 팝업에 전달한다 (저장소는 원본 유지)
+    return collapseFrameDuplicates(await getVideos(msg.tabId));
   },
 
   async DOWNLOAD_VIDEO(msg) {
-    const videos = await getVideos(msg.tabId);
+    // 병합 뷰에서 찾아야 팝업이 보는 항목(합쳐진 스트림)의 id와 일치한다
+    const videos = collapseFrameDuplicates(await getVideos(msg.tabId));
     const video = videos.find((v) => v.id === msg.videoId);
     if (!video) {
       return { ok: false, error: t('errorVideoNotFound') };
