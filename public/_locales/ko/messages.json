@@ -1,0 +1,81 @@
+{
+  "extName": { "message": "Video Downloader" },
+  "extDescription": { "message": "현재 페이지에서 탐지된 동영상을 다운로드합니다." },
+
+  "popupHeading": { "message": "동영상 다운로드" },
+  "rescanButton": { "message": "다시 스캔" },
+  "rescanTooltip": { "message": "페이지를 다시 스캔합니다" },
+
+  "statusNoActiveTab": { "message": "활성 탭을 찾을 수 없습니다." },
+  "statusListLoadFailed": {
+    "message": "목록을 불러오지 못했습니다: $DETAIL$",
+    "placeholders": { "detail": { "content": "$1" } }
+  },
+  "statusStartingDownload": { "message": "다운로드 시작 중…" },
+  "statusDownloadStarted": { "message": "다운로드를 시작했습니다." },
+  "statusDownloadFailed": {
+    "message": "다운로드 실패: $DETAIL$",
+    "placeholders": { "detail": { "content": "$1" } }
+  },
+  "statusDownloadCancelled": { "message": "다운로드를 취소했습니다." },
+  "statusCancelFailed": {
+    "message": "취소 실패: $DETAIL$",
+    "placeholders": { "detail": { "content": "$1" } }
+  },
+  "statusRescanning": { "message": "다시 스캔 중…" },
+  "statusRescanFailed": {
+    "message": "스캔 실패: $DETAIL$",
+    "placeholders": { "detail": { "content": "$1" } }
+  },
+
+  "kindBlobHint": {
+    "message": "스트리밍 동영상 — 재생하면 아래에 다운로드 가능한 스트림 항목이 나타납니다"
+  },
+  "kindHls": { "message": "HLS 스트림" },
+  "kindDash": { "message": "DASH 스트림" },
+  "streamingVideoName": { "message": "스트리밍 동영상" },
+
+  "phasePreparing": { "message": "준비 중…" },
+  "phaseDownloading": {
+    "message": "다운로드 중 $PERCENT$%",
+    "placeholders": { "percent": { "content": "$1" } }
+  },
+  "phaseMuxing": { "message": "변환 중…" },
+  "phaseMuxingPercent": {
+    "message": "변환 중 $PERCENT$%",
+    "placeholders": { "percent": { "content": "$1" } }
+  },
+  "phaseSaving": { "message": "저장 중…" },
+
+  "buttonDownload": { "message": "다운로드" },
+  "buttonDownloading": { "message": "다운로드 중…" },
+  "buttonCancel": { "message": "취소" },
+
+  "emptyTitle": { "message": "탐지된 동영상이 없습니다" },
+  "emptyHint": {
+    "message": "페이지에서 동영상을 재생하면 탐지될 수 있어요. 위의 \"다시 스캔\"도 시도해 보세요."
+  },
+
+  "errorVideoNotFound": { "message": "동영상을 찾을 수 없습니다. 페이지를 다시 스캔해 주세요." },
+  "errorUnsupportedVideoType": {
+    "message": "이 형식의 동영상은 아직 다운로드를 지원하지 않습니다."
+  },
+  "errorDownloadInProgress": { "message": "이미 다운로드가 진행 중입니다." },
+  "errorOffscreenStartFailed": { "message": "스트림 처리기를 시작하지 못했습니다." },
+  "errorSaveFailed": {
+    "message": "저장 실패: $DETAIL$",
+    "placeholders": { "detail": { "content": "$1" } }
+  },
+  "errorSaveInterrupted": { "message": "파일 저장이 중단되었습니다." },
+
+  "streamErrorLive": { "message": "실시간 스트림은 다운로드할 수 없습니다." },
+  "streamErrorDrm": { "message": "DRM으로 보호된 스트림은 다운로드할 수 없습니다." },
+  "streamErrorTooLarge": { "message": "동영상이 너무 커서 다운로드할 수 없습니다 (최대 약 1GB)." },
+  "streamErrorFetch": { "message": "스트림 다운로드 중 네트워크 오류가 발생했습니다." },
+  "streamErrorUnsupported": { "message": "지원하지 않는 스트림 형식입니다." },
+  "streamErrorCancelled": { "message": "다운로드가 취소되었습니다." },
+  "streamErrorGeneric": {
+    "message": "스트림 다운로드 중 오류가 발생했습니다: $DETAIL$",
+    "placeholders": { "detail": { "content": "$1" } }
+  }
+}

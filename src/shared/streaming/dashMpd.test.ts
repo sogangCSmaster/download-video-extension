@@ -150,6 +150,40 @@ describe('parseMpd — 거부 경로', () => {
     }
   });
 
+  it('r=-1인데 다음 S@t도 period duration도 없으면 StreamError(unsupported)', () => {
+    // 잘린 파일이 조용히 저장되는 대신 명시적으로 거부해야 한다
+    const xml = mpd(
+      `<AdaptationSet contentType="video" mimeType="video/mp4">
+        <SegmentTemplate media="v-$Time$.m4s" timescale="1000">
+          <SegmentTimeline><S t="0" d="4000" r="-1"/></SegmentTimeline>
+        </SegmentTemplate>
+        <Representation id="v1" bandwidth="1"/>
+      </AdaptationSet>`,
+      'type="static"',
+    );
+    try {
+      parseMpd(xml, MPD_URL);
+      throw new Error('던져야 함');
+    } catch (error) {
+      expect((error as StreamError).code).toBe('unsupported');
+    }
+  });
+
+  it('SegmentBase인데 BaseURL이 전혀 없으면 트랙에서 제외한다 (MPD URL을 미디어로 받지 않음)', () => {
+    const xml = mpd(`
+      <AdaptationSet contentType="video" mimeType="video/mp4">
+        <Representation id="v1" bandwidth="1">
+          <SegmentBase indexRange="800-1000"/>
+        </Representation>
+      </AdaptationSet>`);
+    try {
+      parseMpd(xml, MPD_URL);
+      throw new Error('던져야 함');
+    } catch (error) {
+      expect((error as StreamError).code).toBe('unsupported');
+    }
+  });
+
   it('ContentProtection은 StreamError(drm)', () => {
     const xml = mpd(`
       <AdaptationSet contentType="video" mimeType="video/mp4">

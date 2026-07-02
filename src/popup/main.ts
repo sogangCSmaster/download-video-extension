@@ -1,13 +1,28 @@
+import type { MessageKey } from '@shared/i18n';
+import { t } from '@shared/i18n';
 import { sendMessage } from '@shared/messages';
 import { downloadStateKeyForTab, storageKeyForTab } from '@shared/storageKeys';
 import type { DetectedVideo, StreamDownloadState } from '@shared/types';
+import { isDownloadableKind } from '@shared/urlUtils';
 
 import { renderVideoList } from './videoList';
 
 function requireElement<T extends HTMLElement>(id: string): T {
   const el = document.getElementById(id);
-  if (!el) throw new Error(`popup: #${id} 요소가 없습니다`);
+  if (!el) throw new Error(`popup: missing #${id} element`);
   return el as T;
+}
+
+/** index.html의 data-i18n/data-i18n-title 요소를 UI 언어 문구로 채운다. */
+function localizeStaticText(): void {
+  document.documentElement.lang = chrome.i18n.getUILanguage();
+  document.title = t('extName');
+  for (const el of document.querySelectorAll<HTMLElement>('[data-i18n]')) {
+    el.textContent = t(el.dataset.i18n as MessageKey);
+  }
+  for (const el of document.querySelectorAll<HTMLElement>('[data-i18n-title]')) {
+    el.title = t(el.dataset.i18nTitle as MessageKey);
+  }
 }
 
 function describeError(error: unknown): string {
@@ -20,6 +35,8 @@ async function activeTabId(): Promise<number | undefined> {
 }
 
 async function main(): Promise<void> {
+  localizeStaticText();
+
   const listContainer = requireElement<HTMLDivElement>('list-container');
   const rescanButton = requireElement<HTMLButtonElement>('rescan-button');
   const statusEl = requireElement<HTMLParagraphElement>('status');
@@ -27,7 +44,7 @@ async function main(): Promise<void> {
 
   const foundTabId = await activeTabId();
   if (foundTabId === undefined) {
-    statusEl.textContent = '활성 탭을 찾을 수 없습니다.';
+    statusEl.textContent = t('statusNoActiveTab');
     return;
   }
   const tabId = foundTabId;
@@ -47,8 +64,10 @@ async function main(): Promise<void> {
   }
 
   function render(): void {
-    countEl.hidden = currentVideos.length === 0;
-    countEl.textContent = String(currentVideos.length);
+    // blob 안내 항목은 실제 받을 수 있는 게 아니므로 개수에 세지 않는다
+    const downloadableCount = currentVideos.filter((v) => isDownloadableKind(v.kind)).length;
+    countEl.hidden = downloadableCount === 0;
+    countEl.textContent = String(downloadableCount);
     renderVideoList(
       listContainer,
       currentVideos,
@@ -73,7 +92,7 @@ async function main(): Promise<void> {
     try {
       await refresh();
     } catch (error) {
-      showStatus(`목록을 불러오지 못했습니다: ${describeError(error)}`, true);
+      showStatus(t('statusListLoadFailed', describeError(error)), true);
     }
   }
 
@@ -82,7 +101,7 @@ async function main(): Promise<void> {
     void (async () => {
       inFlightDownloads.add(videoId);
       render();
-      showStatus('다운로드 시작 중…');
+      showStatus(t('statusStartingDownload'));
       try {
         const result = await sendMessage({
           type: 'DOWNLOAD_VIDEO',
@@ -90,12 +109,12 @@ async function main(): Promise<void> {
           videoId,
         });
         if (result.ok) {
-          showStatus('다운로드를 시작했습니다.');
+          showStatus(t('statusDownloadStarted'));
         } else {
-          showStatus(`다운로드 실패: ${result.error}`, true);
+          showStatus(t('statusDownloadFailed', result.error), true);
         }
       } catch (error) {
-        showStatus(`다운로드 실패: ${describeError(error)}`, true);
+        showStatus(t('statusDownloadFailed', describeError(error)), true);
       } finally {
         inFlightDownloads.delete(videoId);
         render();
@@ -107,22 +126,22 @@ async function main(): Promise<void> {
     void (async () => {
       try {
         await sendMessage({ type: 'CANCEL_DOWNLOAD', tabId, videoId });
-        showStatus('다운로드를 취소했습니다.');
+        showStatus(t('statusDownloadCancelled'));
       } catch (error) {
-        showStatus(`취소 실패: ${describeError(error)}`, true);
+        showStatus(t('statusCancelFailed', describeError(error)), true);
       }
     })();
   }
 
   rescanButton.addEventListener('click', () => {
     void (async () => {
-      showStatus('다시 스캔 중…');
+      showStatus(t('statusRescanning'));
       try {
         await sendMessage({ type: 'RESCAN_TAB', tabId });
         await refresh();
         showStatus('');
       } catch (error) {
-        showStatus(`스캔 실패: ${describeError(error)}`, true);
+        showStatus(t('statusRescanFailed', describeError(error)), true);
       }
     })();
   });

@@ -38,18 +38,20 @@ async function startJob(job: StreamJobRef, video: DetectedVideo): Promise<void> 
     void sendMessage({ type: 'STREAM_JOB_PROGRESS', job, phase, progress }).catch(() => undefined);
   };
 
+  // 최종 메시지를 보내기 전에 잡 카운트를 내려야, 메시지를 처리하는 SW가
+  // OFFSCREEN_STATUS로 잔여 작업을 조회할 때 이 잡이 이미 끝난 것으로 보인다
   try {
     const { blobUrl, filename } = await runJob(video, controller.signal, report);
     liveBlobUrls.add(blobUrl);
+    jobs.delete(job.jobId);
     await sendMessage({ type: 'STREAM_JOB_COMPLETE', job, blobUrl, filename });
   } catch (error) {
+    jobs.delete(job.jobId);
     await sendMessage({
       type: 'STREAM_JOB_FAILED',
       job,
       error: streamErrorMessage(error),
     }).catch(() => undefined);
-  } finally {
-    jobs.delete(job.jobId);
   }
 }
 
@@ -72,6 +74,10 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
       URL.revokeObjectURL(message.blobUrl);
       liveBlobUrls.delete(message.blobUrl);
       // 남은 작업이 없으면 SW가 이 문서를 닫는다
+      sendResponse({ active: jobs.size + liveBlobUrls.size });
+      return false;
+
+    case 'OFFSCREEN_STATUS':
       sendResponse({ active: jobs.size + liveBlobUrls.size });
       return false;
   }

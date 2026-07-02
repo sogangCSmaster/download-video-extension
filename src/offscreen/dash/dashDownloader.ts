@@ -38,7 +38,7 @@ export async function downloadDash(
 ): Promise<DashDownloadResult> {
   const manifest = parseMpd(await fetchText(url, signal), url);
   const { video, audio } = selectRepresentations(manifest);
-  if (!video && !audio) throw new StreamError('unsupported', '트랙 없음');
+  if (!video && !audio) throw new StreamError('unsupported', 'no tracks');
 
   // 트랙별 진행률을 세그먼트 수로 가중 합산한다
   const totals = { video: video ? video.segments.length + 1 : 0, audio: audio ? audio.segments.length + 1 : 0 };

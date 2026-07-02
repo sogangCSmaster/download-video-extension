@@ -25,9 +25,9 @@ function importAesKey(keyUrl: string, signal: AbortSignal, cache: KeyCache): Pro
   if (cached) return cached;
   const imported = (async () => {
     const response = await fetch(keyUrl, { signal, credentials: 'omit' });
-    if (!response.ok) throw new StreamError('fetch', `키 HTTP ${response.status}`);
+    if (!response.ok) throw new StreamError('fetch', `key HTTP ${response.status}`);
     const raw = await response.arrayBuffer();
-    if (raw.byteLength !== 16) throw new StreamError('drm', '잘못된 AES-128 키 길이');
+    if (raw.byteLength !== 16) throw new StreamError('drm', 'invalid AES-128 key length');
     return crypto.subtle.importKey('raw', raw, { name: 'AES-CBC' }, false, ['decrypt']);
   })();
   cache.set(keyUrl, imported);
@@ -55,7 +55,7 @@ async function decryptAes128(
   signal: AbortSignal,
   cache: KeyCache,
 ): Promise<Uint8Array> {
-  if (!key.url) throw new StreamError('drm', 'AES-128 키 URI 없음');
+  if (!key.url) throw new StreamError('drm', 'missing AES-128 key URI');
   const cryptoKey = await importAesKey(key.url, signal, cache);
   const iv = deriveIv(key.iv, mediaSequence);
   const plain = await crypto.subtle.decrypt(
@@ -93,10 +93,10 @@ async function downloadMediaPlaylist(
 ): Promise<HlsTrackData> {
   const parsed = parsePlaylist(await fetchText(playlistUrl, signal), playlistUrl);
   if (parsed.kind !== 'media') {
-    throw new StreamError('unsupported', '중첩된 master 플레이리스트');
+    throw new StreamError('unsupported', 'nested master playlist');
   }
   if (!parsed.endlist) throw new StreamError('live');
-  if (parsed.segments.length === 0) throw new StreamError('unsupported', '세그먼트 없음');
+  if (parsed.segments.length === 0) throw new StreamError('unsupported', 'no segments');
   assertDecryptable(parsed);
 
   const keyCache: KeyCache = new Map();
@@ -152,7 +152,7 @@ export async function downloadHls(
   }
 
   const variant = selectVariant(parsed);
-  if (!variant) throw new StreamError('unsupported', 'variant 없음');
+  if (!variant) throw new StreamError('unsupported', 'no variants');
   const audioRendition = selectAudioRendition(parsed, variant);
 
   if (!audioRendition?.url) {

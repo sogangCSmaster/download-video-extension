@@ -14,6 +14,35 @@ import type { ByteBudget } from './segmentFetcher';
  */
 const MAX_STREAM_BYTES = 1024 * 1024 * 1024;
 
+/**
+ * 한도는 offscreen 문서 전체(동시 잡 합산) 기준이다 — 잡마다 별도 한도면
+ * 동시 다운로드 시 문서가 OOM으로 죽을 수 있다. 각 잡은 자기가 더한 몫을
+ * 기억했다가 종료 시 반환한다.
+ */
+let totalUsedBytes = 0;
+
+interface JobBudget extends ByteBudget {
+  release(): void;
+}
+
+function createJobBudget(): JobBudget {
+  let ownBytes = 0;
+  return {
+    maxBytes: MAX_STREAM_BYTES,
+    get usedBytes() {
+      return totalUsedBytes;
+    },
+    set usedBytes(value: number) {
+      ownBytes += value - totalUsedBytes;
+      totalUsedBytes = value;
+    },
+    release() {
+      totalUsedBytes -= ownBytes;
+      ownBytes = 0;
+    },
+  };
+}
+
 export type ProgressReporter = (phase: StreamPhase, progress: number) => void;
 
 export interface JobOutput {
@@ -25,8 +54,8 @@ async function assembleMp4(
   video: DetectedVideo,
   signal: AbortSignal,
   report: ProgressReporter,
+  budget: ByteBudget,
 ): Promise<Uint8Array> {
-  const budget: ByteBudget = { usedBytes: 0, maxBytes: MAX_STREAM_BYTES };
   const onDownload = (fraction: number) => report('downloading', fraction);
   const onMux = (fraction: number) => report('muxing', fraction);
 
@@ -55,7 +84,7 @@ async function assembleMp4(
       return muxAv({ data: videoData, container: 'mp4' }, { data: audioData, container: 'mp4' }, onMux);
     }
     const only = videoData ?? audioData;
-    if (!only) throw new StreamError('unsupported', '트랙 없음');
+    if (!only) throw new StreamError('unsupported', 'no tracks');
     return remuxFmp4ToMp4(only, onMux);
   }
 
@@ -72,7 +101,14 @@ export async function runJob(
   report: ProgressReporter,
 ): Promise<JobOutput> {
   report('preparing', 0);
-  const mp4 = await assembleMp4(video, signal, report);
+  const budget = createJobBudget();
+  let mp4: Uint8Array;
+  try {
+    mp4 = await assembleMp4(video, signal, report, budget);
+  } finally {
+    // 잡이 끝나면(성공·실패 무관) 이 잡이 점유한 총량을 반환한다
+    budget.release();
+  }
   if (signal.aborted) throw new StreamError('cancelled');
 
   const blobUrl = URL.createObjectURL(new Blob([mp4 as BlobPart], { type: 'video/mp4' }));

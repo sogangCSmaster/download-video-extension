@@ -1,3 +1,5 @@
+import type { MessageKey } from '@shared/i18n';
+import { t } from '@shared/i18n';
 import type { DetectedVideo, StreamDownloadState, VideoKind } from '@shared/types';
 import { isDownloadableKind, urlBasename } from '@shared/urlUtils';
 
@@ -8,10 +10,10 @@ export interface VideoListCallbacks {
   onCancel(videoId: string): void;
 }
 
-const KIND_LABELS: Record<Exclude<VideoKind, 'direct'>, string> = {
-  blob: '스트리밍 동영상 — 재생하면 아래에 다운로드 가능한 스트림 항목이 나타납니다',
-  hls: 'HLS 스트림',
-  dash: 'DASH 스트림',
+const KIND_LABEL_KEYS: Record<Exclude<VideoKind, 'direct'>, MessageKey> = {
+  blob: 'kindBlobHint',
+  hls: 'kindHls',
+  dash: 'kindDash',
 };
 
 const FILM_ICON =
@@ -22,7 +24,7 @@ const SEARCH_ICON =
 
 function videoDisplayName(video: DetectedVideo): string {
   if (video.kind === 'blob') {
-    return video.pageTitle || '스트리밍 동영상';
+    return video.pageTitle || t('streamingVideoName');
   }
   return urlBasename(video.url) ?? video.url;
 }
@@ -31,8 +33,11 @@ function metaChips(video: DetectedVideo): string[] {
   const chips: string[] = [];
   if (video.width && video.height) chips.push(`${video.width}×${video.height}`);
   if (video.durationSec) chips.push(formatDuration(video.durationSec));
-  if (video.sizeBytes) chips.push(formatBytes(video.sizeBytes));
-  if (video.mimeType) chips.push(video.mimeType);
+  // hls/dash의 sizeBytes·mimeType은 매니페스트 파일(m3u8/mpd 텍스트)의 것이라
+  // 실제 영상 크기·형식과 무관하다 — 오해를 부르므로 표시하지 않는다
+  const isManifest = video.kind === 'hls' || video.kind === 'dash';
+  if (video.sizeBytes && !isManifest) chips.push(formatBytes(video.sizeBytes));
+  if (video.mimeType && !isManifest) chips.push(video.mimeType);
   return chips;
 }
 
@@ -56,13 +61,13 @@ function streamButtonLabel(state: StreamDownloadState): string {
   const percent = Math.round(state.progress * 100);
   switch (state.phase) {
     case 'preparing':
-      return '준비 중…';
+      return t('phasePreparing');
     case 'downloading':
-      return `다운로드 중 ${percent}%`;
+      return t('phaseDownloading', String(percent));
     case 'muxing':
-      return percent > 0 ? `변환 중 ${percent}%` : '변환 중…';
+      return percent > 0 ? t('phaseMuxingPercent', String(percent)) : t('phaseMuxing');
     case 'saving':
-      return '저장 중…';
+      return t('phaseSaving');
   }
 }
 
@@ -100,7 +105,7 @@ function renderItem(
   if (video.kind !== 'direct') {
     const badge = document.createElement('div');
     badge.className = 'video-badge';
-    badge.textContent = KIND_LABELS[video.kind];
+    badge.textContent = t(KIND_LABEL_KEYS[video.kind]);
     info.appendChild(badge);
   }
 
@@ -113,26 +118,29 @@ function renderItem(
 
   const streamActive = streamState !== undefined && streamState.error === undefined;
 
-  const button = document.createElement('button');
-  button.className = 'download-button';
-  if (streamActive) {
-    button.textContent = streamButtonLabel(streamState);
-  } else {
-    button.textContent = isDownloading ? '다운로드 중…' : '다운로드';
-  }
-  button.disabled = !isDownloadableKind(video.kind) || isDownloading || streamActive;
-  button.addEventListener('click', () => callbacks.onDownload(video.id));
-
   const actions = document.createElement('div');
   actions.className = 'video-actions';
-  actions.appendChild(button);
 
-  if (streamActive) {
-    const cancel = document.createElement('button');
-    cancel.className = 'cancel-button';
-    cancel.textContent = '취소';
-    cancel.addEventListener('click', () => callbacks.onCancel(video.id));
-    actions.appendChild(cancel);
+  // blob(MSE)은 원리상 URL 다운로드가 불가 — 비활성 버튼 대신 안내 배지만 보여준다
+  if (isDownloadableKind(video.kind)) {
+    const button = document.createElement('button');
+    button.className = 'download-button';
+    if (streamActive) {
+      button.textContent = streamButtonLabel(streamState);
+    } else {
+      button.textContent = isDownloading ? t('buttonDownloading') : t('buttonDownload');
+    }
+    button.disabled = isDownloading || streamActive;
+    button.addEventListener('click', () => callbacks.onDownload(video.id));
+    actions.appendChild(button);
+
+    if (streamActive) {
+      const cancel = document.createElement('button');
+      cancel.className = 'cancel-button';
+      cancel.textContent = t('buttonCancel');
+      cancel.addEventListener('click', () => callbacks.onCancel(video.id));
+      actions.appendChild(cancel);
+    }
   }
 
   item.append(renderThumbnail(video), info, actions);
@@ -146,11 +154,11 @@ function renderEmptyState(container: HTMLElement): void {
 
   const title = document.createElement('p');
   title.className = 'empty-title';
-  title.textContent = '탐지된 동영상이 없습니다';
+  title.textContent = t('emptyTitle');
 
   const hint = document.createElement('p');
   hint.className = 'empty-hint';
-  hint.textContent = '페이지에서 동영상을 재생하면 탐지될 수 있어요. 위의 "다시 스캔"도 시도해 보세요.';
+  hint.textContent = t('emptyHint');
 
   empty.append(title, hint);
   container.appendChild(empty);
@@ -164,6 +172,8 @@ export function renderVideoList(
   inFlightIds: ReadonlySet<string>,
   streamStates: Record<string, StreamDownloadState>,
 ): void {
+  // 진행률 갱신마다 목록을 새로 만들므로, 스크롤 위치를 보존했다가 복원한다
+  const prevScrollTop = container.querySelector('.video-list')?.scrollTop ?? 0;
   container.replaceChildren();
 
   if (videos.length === 0) {
@@ -171,12 +181,18 @@ export function renderVideoList(
     return;
   }
 
+  // 다운로드 가능한 항목을 위로, blob 안내 항목은 아래로 (그 외 순서는 탐지 순 유지)
+  const ordered = [...videos].sort(
+    (a, b) => Number(isDownloadableKind(b.kind)) - Number(isDownloadableKind(a.kind)),
+  );
+
   const list = document.createElement('ul');
   list.className = 'video-list';
-  for (const video of videos) {
+  for (const video of ordered) {
     list.appendChild(
       renderItem(video, callbacks, inFlightIds.has(video.id), streamStates[video.id]),
     );
   }
   container.appendChild(list);
+  list.scrollTop = prevScrollTop;
 }

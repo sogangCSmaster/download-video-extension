@@ -36,6 +36,28 @@ export function setDownloadState(tabId: number, state: StreamDownloadState): Pro
 }
 
 /**
+ * 같은 jobId의 상태가 아직 존재할 때만 갱신한다. 갱신했으면 true.
+ * 존재 확인과 쓰기를 같은 큐 슬롯에서 수행하므로, 취소(clear) 직후 도착한
+ * 늦은 진행률 메시지가 지워진 상태를 되살리는 check-then-act 경쟁이 없다.
+ */
+export function updateDownloadStateIfCurrent(
+  tabId: number,
+  videoId: string,
+  jobId: string,
+  update: (existing: StreamDownloadState) => StreamDownloadState,
+): Promise<boolean> {
+  let updated = false;
+  return enqueueTabWrite(tabId, async () => {
+    const states = await getDownloadStates(tabId);
+    const existing = states[videoId];
+    if (!existing || existing.jobId !== jobId) return;
+    states[videoId] = update(existing);
+    await chrome.storage.session.set({ [downloadStateKeyForTab(tabId)]: states });
+    updated = true;
+  }).then(() => updated);
+}
+
+/**
  * 하나의 다운로드 상태를 제거한다.
  * @param expectedJobId 지정 시 해당 잡의 상태일 때만 제거한다 (뒤늦게 도착한 이전 잡 메시지 무시)
  */

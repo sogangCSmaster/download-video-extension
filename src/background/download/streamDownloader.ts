@@ -1,9 +1,10 @@
+import { t } from '@shared/i18n';
 import type { DownloadResult } from '@shared/messages';
 import { sendToOffscreen } from '@shared/messages';
 import type { DetectedVideo, StreamJobRef } from '@shared/types';
 
 import { clearDownloadState, getDownloadStates, setDownloadState } from '../downloadStateStore';
-import { ensureOffscreenDocument } from '../offscreenManager';
+import { runWithOffscreen } from '../offscreenManager';
 import type { Downloader } from './downloader';
 
 /**
@@ -21,7 +22,7 @@ export const streamDownloader: Downloader = {
     const states = await getDownloadStates(tabId);
     const existing = states[video.id];
     if (existing && !existing.error) {
-      return { ok: false, error: '이미 다운로드가 진행 중입니다.' };
+      return { ok: false, error: t('errorDownloadInProgress') };
     }
 
     const job: StreamJobRef = { jobId: crypto.randomUUID(), tabId, videoId: video.id };
@@ -34,10 +35,12 @@ export const streamDownloader: Downloader = {
     });
 
     try {
-      await ensureOffscreenDocument();
-      const ack = await sendToOffscreen({ type: 'OFFSCREEN_START_JOB', job, video });
+      // 문서 보장과 잡 전송을 한 임계구역에서 수행해, 직전 잡 정리(close)와의 경쟁을 막는다
+      const ack = await runWithOffscreen(() =>
+        sendToOffscreen({ type: 'OFFSCREEN_START_JOB', job, video }),
+      );
       if (!ack?.ok) {
-        throw new Error('스트림 처리기를 시작하지 못했습니다.');
+        throw new Error(t('errorOffscreenStartFailed'));
       }
     } catch (error) {
       await clearDownloadState(tabId, video.id, job.jobId);

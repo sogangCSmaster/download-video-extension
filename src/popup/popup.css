@@ -108,6 +108,34 @@ body {
   gap: 8px;
   max-height: 440px;
   overflow-y: auto;
+  /* 스크롤바 유무와 무관하게 목록 폭을 고정해 레이아웃 흔들림 방지 */
+  scrollbar-gutter: stable;
+}
+
+/* macOS 스타일 플로팅 스크롤바: 트랙은 투명, 썸은 호버 시에만 표시 */
+.video-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.video-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.video-list::-webkit-scrollbar-thumb {
+  /* 투명 보더 + padding-box 클립으로 가장자리에서 띄운 4px 알약 모양 */
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+  background-color: transparent;
+}
+
+.video-list:hover::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--text) 24%, transparent);
+}
+
+.video-list::-webkit-scrollbar-thumb:hover,
+.video-list::-webkit-scrollbar-thumb:active {
+  background-color: color-mix(in srgb, var(--text) 45%, transparent);
 }
 
 .video-item {

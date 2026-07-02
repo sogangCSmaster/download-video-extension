@@ -1,3 +1,4 @@
+import { t } from '@shared/i18n';
 import type { Message, MessageOf, MessageType, ResponseMap } from '@shared/messages';
 import { sendMessageToTab } from '@shared/messages';
 import { classifyVideoUrl, videoIdFromUrl } from '@shared/urlUtils';
@@ -58,7 +59,7 @@ const handlers: HandlerTable = {
     const videos = await getVideos(msg.tabId);
     const video = videos.find((v) => v.id === msg.videoId);
     if (!video) {
-      return { ok: false, error: '동영상을 찾을 수 없습니다. 페이지를 다시 스캔해 주세요.' };
+      return { ok: false, error: t('errorVideoNotFound') };
     }
     return downloadVideo(video, msg.tabId);
   },
@@ -116,7 +117,7 @@ export function registerMessageRouter(): void {
     if (!handler) return false;
 
     handler(message, sender).then(sendResponse, (error: unknown) => {
-      console.error(`[messageRouter] ${message.type} 처리 실패:`, error);
+      console.error(`[messageRouter] failed to handle ${message.type}:`, error);
       const describe = error instanceof Error ? error.message : String(error);
       sendResponse(errorFallbacks[message.type](describe));
     });

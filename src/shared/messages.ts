@@ -57,7 +57,8 @@ export function sendMessageToTab<T extends MessageType>(
 export type OffscreenMessage =
   | { type: 'OFFSCREEN_START_JOB'; job: StreamJobRef; video: DetectedVideo } // bg → offscreen
   | { type: 'OFFSCREEN_CANCEL_JOB'; jobId: string } // bg → offscreen
-  | { type: 'OFFSCREEN_RELEASE_BLOB'; blobUrl: string }; // bg → offscreen
+  | { type: 'OFFSCREEN_RELEASE_BLOB'; blobUrl: string } // bg → offscreen
+  | { type: 'OFFSCREEN_STATUS' }; // bg → offscreen (잡/blob 잔여 수 조회)
 
 export type OffscreenMessageType = OffscreenMessage['type'];
 
@@ -66,6 +67,7 @@ export interface OffscreenResponseMap {
   OFFSCREEN_CANCEL_JOB: undefined;
   /** active: 아직 진행 중인 잡 + 미해제 blob 수. 0이면 SW가 offscreen 문서를 닫아도 된다. */
   OFFSCREEN_RELEASE_BLOB: { active: number };
+  OFFSCREEN_STATUS: { active: number };
 }
 
 export type OffscreenMessageOf<T extends OffscreenMessageType> = Extract<

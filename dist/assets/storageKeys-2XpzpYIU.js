@@ -1,0 +1,1 @@
+var e=`videos:`;function t(t){return`${e}${t}`}function n(t){if(!t.startsWith(e))return null;let n=Number(t.slice(7));return Number.isInteger(n)?n:null}function r(e){return`dl:${e}`}var i=`dl-blobs`;export{n as i,r as n,t as r,i as t};

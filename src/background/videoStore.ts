@@ -91,6 +91,17 @@ export function syncDomVideos(tabId: number, frameId: number, videos: DetectedVi
   });
 }
 
+/** 지정한 id들을 탭 목록에서 제거한다 (master 플레이리스트가 커버하는 variant 정리용). */
+export function removeVideos(tabId: number, ids: Iterable<string>): Promise<void> {
+  const drop = new Set(ids);
+  if (drop.size === 0) return Promise.resolve();
+  return enqueueTabWrite(tabId, async () => {
+    const existing = await getVideos(tabId);
+    const after = existing.filter((v) => !drop.has(v.id));
+    await writeIfChanged(tabId, existing, after);
+  });
+}
+
 /** 탭의 목록을 초기화한다 (탭 닫힘/네비게이션 시). */
 export function clearTab(tabId: number): Promise<void> {
   return enqueueTabWrite(tabId, async () => {

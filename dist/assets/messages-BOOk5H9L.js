@@ -1,0 +1,1 @@
+function e(e){return chrome.runtime.sendMessage(e)}function t(e,t){return chrome.tabs.sendMessage(e,t)}function n(e){return chrome.runtime.sendMessage(e)}export{t as n,n as r,e as t};

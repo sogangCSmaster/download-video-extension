@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Video Downloader</title>
+    <script type="module" crossorigin src="/assets/index.html-k-D_VFSy.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-Dezn_h7o.js">
+    <link rel="modulepreload" crossorigin href="/assets/messages-BOOk5H9L.js">
+    <link rel="modulepreload" crossorigin href="/assets/urlUtils-CJ0TEUNu.js">
+    <link rel="modulepreload" crossorigin href="/assets/storageKeys-2XpzpYIU.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-DazRPw0h.css">
+  </head>
+  <body>
+    <header class="popup-header">
+      <div class="popup-title">
+        <svg class="popup-logo" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="11" fill="currentColor" opacity="0.12" />
+          <path d="M11 6h2v7.2l2.6-2.6 1.4 1.4-5 5-5-5 1.4-1.4L11 13.2V6z" fill="currentColor" />
+          <rect x="7" y="17" width="10" height="1.8" rx="0.9" fill="currentColor" />
+        </svg>
+        <h1 data-i18n="popupHeading">Video Downloader</h1>
+        <span id="video-count" class="video-count" hidden></span>
+      </div>
+      <button id="rescan-button" type="button" data-i18n="rescanButton" data-i18n-title="rescanTooltip">
+        Rescan
+      </button>
+    </header>
+    <main id="list-container" aria-live="polite"></main>
+    <p id="status" class="status" role="status"></p>
+  </body>
+</html>

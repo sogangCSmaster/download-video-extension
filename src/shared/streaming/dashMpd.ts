@@ -173,7 +173,12 @@ function expandTimeline(
       // r=-1: 다음 S@t 또는 period 끝까지 반복
       const nextS = s.nextElementSibling;
       const until = numAttr(nextS?.localName === 'S' ? nextS : null, 't') ?? periodEnd;
-      repeat = until !== null && until !== undefined ? Math.max(0, Math.ceil((until - time) / d) - 1) : 0;
+      if (until === null || until === undefined) {
+        // 종료 시각을 알 수 없으면 세그먼트 1개로 축소되어 잘린 파일이 조용히
+        // 저장되므로, 성공을 가장하지 않고 명시적으로 거부한다
+        throw new StreamError('unsupported', 'S@r=-1 without next @t or period duration');
+      }
+      repeat = Math.max(0, Math.ceil((until - time) / d) - 1);
     }
     for (let i = 0; i <= repeat; i++) {
       entries.push({ time, number });
@@ -277,7 +282,7 @@ export function parseMpd(xmlText: string, mpdUrl: string): DashManifest {
   const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
   const mpd = doc.documentElement;
   if (!mpd || mpd.localName !== 'MPD') {
-    throw new StreamError('unsupported', 'MPD 문서가 아님');
+    throw new StreamError('unsupported', 'not an MPD document');
   }
   if (attr(mpd, 'type') === 'dynamic') {
     throw new StreamError('live');
@@ -288,7 +293,7 @@ export function parseMpd(xmlText: string, mpdUrl: string): DashManifest {
 
   // 다중 Period 이어붙이기는 범위 밖 — 첫 Period만 다운로드한다.
   const period = firstChild(mpd, 'Period');
-  if (!period) throw new StreamError('unsupported', 'Period 없음');
+  if (!period) throw new StreamError('unsupported', 'no Period');
   const periodDurationSec =
     parseIsoDuration(attr(period, 'duration')) ?? mediaPresentationDurationSec;
   const periodBase = resolveBase(period, mpdBase);
@@ -326,8 +331,10 @@ export function parseMpd(xmlText: string, mpdUrl: string): DashManifest {
       } else if (template?.media) {
         parts = trackFromTemplate(template, repBase, rep, periodDurationSec);
       } else if (firstChild(representation, 'SegmentBase') ?? firstChild(representation, 'BaseURL')) {
-        // SegmentBase 단일 파일: init 포함 파일 전체를 하나의 세그먼트로 받는다
-        parts = { segments: [{ url: repBase }] };
+        // SegmentBase 단일 파일: init 포함 파일 전체를 하나의 세그먼트로 받는다.
+        // BaseURL이 체인 어디에도 없으면 repBase가 MPD URL 그대로라
+        // 매니페스트 XML을 미디어로 받게 되므로 이 representation은 제외한다.
+        if (repBase !== mpdUrl) parts = { segments: [{ url: repBase }] };
       }
       if (!parts) continue;
 
@@ -347,7 +354,7 @@ export function parseMpd(xmlText: string, mpdUrl: string): DashManifest {
   }
 
   if (videoTracks.length === 0 && audioTracks.length === 0) {
-    throw new StreamError('unsupported', '다운로드 가능한 트랙 없음');
+    throw new StreamError('unsupported', 'no downloadable tracks');
   }
   return { videoTracks, audioTracks };
 }

@@ -4,8 +4,9 @@ import pkg from './package.json';
 
 export default defineManifest({
   manifest_version: 3,
-  name: 'Video Downloader',
-  description: '현재 페이지에서 탐지된 동영상을 다운로드합니다.',
+  name: '__MSG_extName__',
+  description: '__MSG_extDescription__',
+  default_locale: 'en',
   version: pkg.version,
   icons: {
     16: 'icons/icon-16.png',
@@ -35,6 +36,6 @@ export default defineManifest({
   ],
   action: {
     default_popup: 'src/popup/index.html',
-    default_title: 'Video Downloader',
+    default_title: '__MSG_extName__',
   },
 });

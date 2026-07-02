@@ -18,7 +18,7 @@ function loadFFmpeg(): Promise<FFmpeg> {
       wasmURL: chrome.runtime.getURL('vendor/ffmpeg-core/ffmpeg-core.wasm'),
       classWorkerURL: chrome.runtime.getURL('vendor/ffmpeg/worker.js'),
     });
-    if (!loaded) throw new StreamError('unsupported', 'ffmpeg 로드 실패');
+    if (!loaded) throw new StreamError('unsupported', 'ffmpeg failed to load');
     return ffmpeg;
   })();
   ffmpegPromise.catch(() => {
@@ -66,11 +66,11 @@ async function execWithFiles(ffmpeg: FFmpeg, options: ExecOptions): Promise<Uint
 
     const code = await ffmpeg.exec(args);
     if (code !== 0) {
-      throw new StreamError('unsupported', `ffmpeg 종료 코드 ${code}`);
+      throw new StreamError('unsupported', `ffmpeg exit code ${code}`);
     }
     const result = await ffmpeg.readFile(output);
     if (typeof result === 'string') {
-      throw new StreamError('unsupported', 'ffmpeg 출력이 바이너리가 아님');
+      throw new StreamError('unsupported', 'ffmpeg output is not binary');
     }
     return result;
   } finally {

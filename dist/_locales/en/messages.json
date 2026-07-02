@@ -1,0 +1,81 @@
+{
+  "extName": { "message": "Video Downloader" },
+  "extDescription": { "message": "Detects videos on the current page and downloads them." },
+
+  "popupHeading": { "message": "Video Downloader" },
+  "rescanButton": { "message": "Rescan" },
+  "rescanTooltip": { "message": "Rescan the page" },
+
+  "statusNoActiveTab": { "message": "Could not find the active tab." },
+  "statusListLoadFailed": {
+    "message": "Failed to load the video list: $DETAIL$",
+    "placeholders": { "detail": { "content": "$1" } }
+  },
+  "statusStartingDownload": { "message": "Starting download…" },
+  "statusDownloadStarted": { "message": "Download started." },
+  "statusDownloadFailed": {
+    "message": "Download failed: $DETAIL$",
+    "placeholders": { "detail": { "content": "$1" } }
+  },
+  "statusDownloadCancelled": { "message": "Download cancelled." },
+  "statusCancelFailed": {
+    "message": "Failed to cancel: $DETAIL$",
+    "placeholders": { "detail": { "content": "$1" } }
+  },
+  "statusRescanning": { "message": "Rescanning…" },
+  "statusRescanFailed": {
+    "message": "Scan failed: $DETAIL$",
+    "placeholders": { "detail": { "content": "$1" } }
+  },
+
+  "kindBlobHint": {
+    "message": "Streaming video — play it and a downloadable stream entry will appear below"
+  },
+  "kindHls": { "message": "HLS stream" },
+  "kindDash": { "message": "DASH stream" },
+  "streamingVideoName": { "message": "Streaming video" },
+
+  "phasePreparing": { "message": "Preparing…" },
+  "phaseDownloading": {
+    "message": "Downloading $PERCENT$%",
+    "placeholders": { "percent": { "content": "$1" } }
+  },
+  "phaseMuxing": { "message": "Converting…" },
+  "phaseMuxingPercent": {
+    "message": "Converting $PERCENT$%",
+    "placeholders": { "percent": { "content": "$1" } }
+  },
+  "phaseSaving": { "message": "Saving…" },
+
+  "buttonDownload": { "message": "Download" },
+  "buttonDownloading": { "message": "Downloading…" },
+  "buttonCancel": { "message": "Cancel" },
+
+  "emptyTitle": { "message": "No videos detected" },
+  "emptyHint": {
+    "message": "Play a video on the page so it can be detected, or try \"Rescan\" above."
+  },
+
+  "errorVideoNotFound": { "message": "Video not found. Please rescan the page." },
+  "errorUnsupportedVideoType": {
+    "message": "Downloading this video format is not supported yet."
+  },
+  "errorDownloadInProgress": { "message": "A download is already in progress." },
+  "errorOffscreenStartFailed": { "message": "Failed to start the stream processor." },
+  "errorSaveFailed": {
+    "message": "Failed to save the file: $DETAIL$",
+    "placeholders": { "detail": { "content": "$1" } }
+  },
+  "errorSaveInterrupted": { "message": "Saving the file was interrupted." },
+
+  "streamErrorLive": { "message": "Live streams cannot be downloaded." },
+  "streamErrorDrm": { "message": "DRM-protected streams cannot be downloaded." },
+  "streamErrorTooLarge": { "message": "The video is too large to download (max ~1GB)." },
+  "streamErrorFetch": { "message": "A network error occurred while downloading the stream." },
+  "streamErrorUnsupported": { "message": "Unsupported stream format." },
+  "streamErrorCancelled": { "message": "Download cancelled." },
+  "streamErrorGeneric": {
+    "message": "An error occurred while downloading the stream: $DETAIL$",
+    "placeholders": { "detail": { "content": "$1" } }
+  }
+}
