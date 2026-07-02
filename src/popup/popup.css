@@ -185,7 +185,38 @@ body {
   font-size: 11px;
 }
 
+.video-error {
+  margin-top: 5px;
+  color: var(--error);
+  font-size: 11px;
+  line-height: 1.4;
+  word-break: keep-all;
+}
+
 /* ── 다운로드 버튼 ────────────────────── */
+
+.video-actions {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.cancel-button {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.cancel-button:hover {
+  color: var(--error);
+  border-color: var(--error);
+}
 
 .download-button {
   flex-shrink: 0;

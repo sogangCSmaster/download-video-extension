@@ -80,7 +80,7 @@ export function classifyVideoUrl(rawUrl: string, mimeType?: string): VideoKind |
   return null;
 }
 
-/** 현재 버전에서 실제 다운로드 가능한 종류인지. 2단계에서 hls를 추가하면 여기만 바꾼다. */
+/** 실제 다운로드 가능한 종류인지. blob(MSE)만 페이지 밖에서 접근할 수 없어 미지원. */
 export function isDownloadableKind(kind: VideoKind): boolean {
-  return kind === 'direct';
+  return kind === 'direct' || kind === 'hls' || kind === 'dash';
 }

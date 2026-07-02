@@ -1,16 +1,17 @@
-import type { DetectedVideo, VideoKind } from '@shared/types';
+import type { DetectedVideo, StreamDownloadState, VideoKind } from '@shared/types';
 import { isDownloadableKind, urlBasename } from '@shared/urlUtils';
 
 import { formatBytes, formatDuration } from './format';
 
 export interface VideoListCallbacks {
   onDownload(videoId: string): void;
+  onCancel(videoId: string): void;
 }
 
 const KIND_LABELS: Record<Exclude<VideoKind, 'direct'>, string> = {
-  blob: '스트리밍 동영상 — 다운로드 미지원',
-  hls: 'HLS 스트림 — 다운로드 미지원',
-  dash: 'DASH 스트림 — 다운로드 미지원',
+  blob: '스트리밍 동영상 — 재생하면 아래에 다운로드 가능한 스트림 항목이 나타납니다',
+  hls: 'HLS 스트림',
+  dash: 'DASH 스트림',
 };
 
 const FILM_ICON =
@@ -50,10 +51,26 @@ function renderThumbnail(video: DetectedVideo): HTMLElement {
   return thumb;
 }
 
+/** 진행 중인 스트림 다운로드의 버튼 문구. */
+function streamButtonLabel(state: StreamDownloadState): string {
+  const percent = Math.round(state.progress * 100);
+  switch (state.phase) {
+    case 'preparing':
+      return '준비 중…';
+    case 'downloading':
+      return `다운로드 중 ${percent}%`;
+    case 'muxing':
+      return percent > 0 ? `변환 중 ${percent}%` : '변환 중…';
+    case 'saving':
+      return '저장 중…';
+  }
+}
+
 function renderItem(
   video: DetectedVideo,
   callbacks: VideoListCallbacks,
   isDownloading: boolean,
+  streamState: StreamDownloadState | undefined,
 ): HTMLElement {
   const item = document.createElement('li');
   item.className = 'video-item';
@@ -87,13 +104,38 @@ function renderItem(
     info.appendChild(badge);
   }
 
+  if (streamState?.error) {
+    const errorLine = document.createElement('div');
+    errorLine.className = 'video-error';
+    errorLine.textContent = streamState.error;
+    info.appendChild(errorLine);
+  }
+
+  const streamActive = streamState !== undefined && streamState.error === undefined;
+
   const button = document.createElement('button');
   button.className = 'download-button';
-  button.textContent = isDownloading ? '다운로드 중…' : '다운로드';
-  button.disabled = !isDownloadableKind(video.kind) || isDownloading;
+  if (streamActive) {
+    button.textContent = streamButtonLabel(streamState);
+  } else {
+    button.textContent = isDownloading ? '다운로드 중…' : '다운로드';
+  }
+  button.disabled = !isDownloadableKind(video.kind) || isDownloading || streamActive;
   button.addEventListener('click', () => callbacks.onDownload(video.id));
 
-  item.append(renderThumbnail(video), info, button);
+  const actions = document.createElement('div');
+  actions.className = 'video-actions';
+  actions.appendChild(button);
+
+  if (streamActive) {
+    const cancel = document.createElement('button');
+    cancel.className = 'cancel-button';
+    cancel.textContent = '취소';
+    cancel.addEventListener('click', () => callbacks.onCancel(video.id));
+    actions.appendChild(cancel);
+  }
+
+  item.append(renderThumbnail(video), info, actions);
   return item;
 }
 
@@ -120,6 +162,7 @@ export function renderVideoList(
   videos: DetectedVideo[],
   callbacks: VideoListCallbacks,
   inFlightIds: ReadonlySet<string>,
+  streamStates: Record<string, StreamDownloadState>,
 ): void {
   container.replaceChildren();
 
@@ -131,7 +174,9 @@ export function renderVideoList(
   const list = document.createElement('ul');
   list.className = 'video-list';
   for (const video of videos) {
-    list.appendChild(renderItem(video, callbacks, inFlightIds.has(video.id)));
+    list.appendChild(
+      renderItem(video, callbacks, inFlightIds.has(video.id), streamStates[video.id]),
+    );
   }
   container.appendChild(list);
 }

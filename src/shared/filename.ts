@@ -65,3 +65,20 @@ export function buildDownloadFilename(options: {
 
   return `${base}${ext}`;
 }
+
+/** 매니페스트 basename이 이런 범용 이름이면 파일명으로서 의미가 없어 pageTitle을 우선한다. */
+const GENERIC_MANIFEST_BASENAMES =
+  /^(master|index|manifest|playlist|prog_index|chunklist|stream|media|video)$/i;
+
+/**
+ * HLS/DASH 매니페스트 URL로부터 변환 결과 MP4의 파일명을 만든다.
+ * basename에서 .m3u8/.mpd를 떼고, 범용 이름이면 페이지 제목을 사용한다.
+ */
+export function buildStreamDownloadFilename(options: { url: string; pageTitle?: string }): string {
+  const { base: rawBase } = splitExtension(urlBasename(options.url) ?? '');
+  let base = sanitizeBasename(rawBase);
+  if (!base || GENERIC_MANIFEST_BASENAMES.test(base)) {
+    base = sanitizeBasename(options.pageTitle ?? '') || base || DEFAULT_BASENAME;
+  }
+  return `${base}.mp4`;
+}

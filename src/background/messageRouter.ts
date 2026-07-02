@@ -4,6 +4,12 @@ import { classifyVideoUrl, videoIdFromUrl } from '@shared/urlUtils';
 import type { DetectedVideo, DomVideoCandidate } from '@shared/types';
 
 import { downloadVideo } from './download/downloader';
+import {
+  cancelStreamDownload,
+  handleStreamComplete,
+  handleStreamFailed,
+  handleStreamProgress,
+} from './streamJobs';
 import { getVideos, syncDomVideos } from './videoStore';
 
 type Handler<T extends MessageType> = (
@@ -54,7 +60,7 @@ const handlers: HandlerTable = {
     if (!video) {
       return { ok: false, error: '동영상을 찾을 수 없습니다. 페이지를 다시 스캔해 주세요.' };
     }
-    return downloadVideo(video);
+    return downloadVideo(video, msg.tabId);
   },
 
   async RESCAN_TAB(msg) {
@@ -63,6 +69,27 @@ const handlers: HandlerTable = {
     } catch {
       // content script가 없는 페이지(chrome:// 등) — 무시
     }
+    return undefined;
+  },
+
+  async CANCEL_DOWNLOAD(msg) {
+    await cancelStreamDownload(msg.tabId, msg.videoId);
+    return undefined;
+  },
+
+  // 아래 셋은 offscreen 문서가 보낸다 (streamJobs.ts에 로직)
+  async STREAM_JOB_PROGRESS(msg) {
+    await handleStreamProgress(msg.job, msg.phase, msg.progress);
+    return undefined;
+  },
+
+  async STREAM_JOB_COMPLETE(msg) {
+    await handleStreamComplete(msg.job, msg.blobUrl, msg.filename);
+    return undefined;
+  },
+
+  async STREAM_JOB_FAILED(msg) {
+    await handleStreamFailed(msg.job, msg.error);
     return undefined;
   },
 };
@@ -76,6 +103,10 @@ const errorFallbacks: { [T in MessageType]: (error: string) => ResponseMap[T] } 
   GET_VIDEOS: () => [],
   DOWNLOAD_VIDEO: (error) => ({ ok: false, error }),
   RESCAN_TAB: () => undefined,
+  CANCEL_DOWNLOAD: () => undefined,
+  STREAM_JOB_PROGRESS: () => undefined,
+  STREAM_JOB_COMPLETE: () => undefined,
+  STREAM_JOB_FAILED: () => undefined,
 };
 
 /** onMessage 리스너를 등록한다. 반드시 service worker top-level에서 호출할 것. */
